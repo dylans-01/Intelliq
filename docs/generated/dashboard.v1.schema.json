@@ -1,0 +1,1328 @@
+{
+  "$defs": {
+    "Action": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "filter",
+            "highlight",
+            "navigate"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "targets": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "const": "all",
+              "type": "string"
+            }
+          ],
+          "default": "all",
+          "title": "Targets"
+        },
+        "fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Fields",
+          "type": "array"
+        },
+        "target_dashboard": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Dashboard"
+        },
+        "clear": {
+          "default": "show_all",
+          "enum": [
+            "show_all",
+            "keep"
+          ],
+          "title": "Clear",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "source"
+      ],
+      "title": "Action",
+      "type": "object"
+    },
+    "AllowedValues": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "default": "all",
+          "enum": [
+            "all",
+            "list",
+            "range"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maxItems": 1000,
+          "title": "Values",
+          "type": "array"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "step": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Step"
+        }
+      },
+      "title": "AllowedValues",
+      "type": "object"
+    },
+    "DashboardFilter": {
+      "additionalProperties": false,
+      "description": "An interactive filter control. Viewer selections only narrow results.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Label",
+          "type": "string"
+        },
+        "dataset_id": {
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "field": {
+          "title": "Field",
+          "type": "string"
+        },
+        "control": {
+          "default": "multi_select",
+          "enum": [
+            "multi_select",
+            "single_select",
+            "range",
+            "date_range",
+            "relative_date",
+            "search"
+          ],
+          "title": "Control",
+          "type": "string"
+        },
+        "stage": {
+          "default": "dimension",
+          "enum": [
+            "context",
+            "dimension"
+          ],
+          "title": "Stage",
+          "type": "string"
+        },
+        "default": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maxItems": 1000,
+          "title": "Default"
+        },
+        "applies_to": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "const": "all",
+              "type": "string"
+            }
+          ],
+          "default": "all",
+          "title": "Applies To"
+        }
+      },
+      "required": [
+        "id",
+        "dataset_id",
+        "field"
+      ],
+      "title": "DashboardFilter",
+      "type": "object"
+    },
+    "FieldUse": {
+      "additionalProperties": false,
+      "description": "A field placed in a query: a semantic field or an ad-hoc formula, plus\nhow it is used (aggregation, date granularity, table calculation).",
+      "properties": {
+        "field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        },
+        "formula": {
+          "anyOf": [
+            {
+              "maxLength": 20000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Formula"
+        },
+        "aggregation": {
+          "anyOf": [
+            {
+              "enum": [
+                "sum",
+                "avg",
+                "min",
+                "max",
+                "count",
+                "countd",
+                "median",
+                "attr",
+                "stdev",
+                "var"
+              ],
+              "type": "string"
+            },
+            {
+              "const": "none",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Aggregation"
+        },
+        "time_unit": {
+          "anyOf": [
+            {
+              "enum": [
+                "year",
+                "quarter",
+                "month",
+                "week",
+                "day",
+                "hour",
+                "minute"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Time Unit"
+        },
+        "date_part": {
+          "anyOf": [
+            {
+              "enum": [
+                "year",
+                "quarter",
+                "month",
+                "week",
+                "weekday",
+                "day"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date Part"
+        },
+        "table_calc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuickTableCalc"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "format": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Format"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "FieldUse",
+      "type": "object"
+    },
+    "Filter": {
+      "additionalProperties": false,
+      "description": "A filter and the stage of Tableau's order of operations it runs in:\n\ndatasource \u2192 context \u2192 (FIXED LOD) \u2192 dimension \u2192 (INCLUDE/EXCLUDE LOD)\n\u2192 measure \u2192 (table calculations) \u2192 table_calc",
+      "properties": {
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FieldUse"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Column"
+        },
+        "op": {
+          "enum": [
+            "in",
+            "not_in",
+            "eq",
+            "neq",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "between",
+            "contains",
+            "starts_with",
+            "is_null",
+            "not_null",
+            "relative_date",
+            "top_n"
+          ],
+          "title": "Op",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maxItems": 10000,
+          "title": "Values",
+          "type": "array"
+        },
+        "stage": {
+          "default": "dimension",
+          "enum": [
+            "datasource",
+            "context",
+            "dimension",
+            "measure",
+            "table_calc"
+          ],
+          "title": "Stage",
+          "type": "string"
+        },
+        "relative": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RelativeDate"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "top_n": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TopN"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "op"
+      ],
+      "title": "Filter",
+      "type": "object"
+    },
+    "Format": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "default": "number",
+          "enum": [
+            "number",
+            "currency",
+            "percent",
+            "date",
+            "text"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "decimals": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Decimals"
+        },
+        "currency": {
+          "default": "USD",
+          "title": "Currency",
+          "type": "string"
+        },
+        "compact": {
+          "default": false,
+          "title": "Compact",
+          "type": "boolean"
+        },
+        "date_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date Pattern"
+        }
+      },
+      "title": "Format",
+      "type": "object"
+    },
+    "Layout": {
+      "additionalProperties": false,
+      "properties": {
+        "columns": {
+          "default": 12,
+          "enum": [
+            12,
+            24
+          ],
+          "title": "Columns",
+          "type": "integer"
+        },
+        "row_height": {
+          "default": 36,
+          "maximum": 200,
+          "minimum": 16,
+          "title": "Row Height",
+          "type": "integer"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/LayoutItem"
+          },
+          "maxItems": 200,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "title": "Layout",
+      "type": "object"
+    },
+    "LayoutItem": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "worksheet",
+            "filter",
+            "parameter",
+            "text"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "maxLength": 5000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Text"
+        },
+        "x": {
+          "maximum": 23,
+          "minimum": 0,
+          "title": "X",
+          "type": "integer"
+        },
+        "y": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Y",
+          "type": "integer"
+        },
+        "w": {
+          "maximum": 24,
+          "minimum": 1,
+          "title": "W",
+          "type": "integer"
+        },
+        "h": {
+          "maximum": 60,
+          "minimum": 1,
+          "title": "H",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
+      "title": "LayoutItem",
+      "type": "object"
+    },
+    "Parameter": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "data_type": {
+          "enum": [
+            "integer",
+            "real",
+            "string",
+            "boolean",
+            "date",
+            "datetime"
+          ],
+          "title": "Data Type",
+          "type": "string"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        },
+        "allowed": {
+          "$ref": "#/$defs/AllowedValues"
+        },
+        "control": {
+          "default": "dropdown",
+          "enum": [
+            "dropdown",
+            "slider",
+            "input"
+          ],
+          "title": "Control",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "data_type"
+      ],
+      "title": "Parameter",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "default": "native",
+          "enum": [
+            "native",
+            "tableau"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "workbook_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workbook Name"
+        },
+        "workbook_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workbook Sha256"
+        },
+        "import_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Import Id"
+        },
+        "imported_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Imported At"
+        },
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Refs",
+          "type": "object"
+        }
+      },
+      "title": "Provenance",
+      "type": "object"
+    },
+    "QuickTableCalc": {
+      "additionalProperties": false,
+      "description": "Tableau-style quick table calculation applied to a measure.",
+      "properties": {
+        "type": {
+          "enum": [
+            "running_total",
+            "percent_of_total",
+            "difference",
+            "percent_difference",
+            "rank",
+            "rank_dense",
+            "index"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "partition_by": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Partition By",
+          "type": "array"
+        },
+        "direction": {
+          "default": "desc",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "title": "Direction",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "QuickTableCalc",
+      "type": "object"
+    },
+    "RelativeDate": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "last_n",
+          "enum": [
+            "current",
+            "previous",
+            "last_n",
+            "to_date"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "unit": {
+          "default": "month",
+          "enum": [
+            "year",
+            "quarter",
+            "month",
+            "week",
+            "day"
+          ],
+          "title": "Unit",
+          "type": "string"
+        },
+        "n": {
+          "default": 1,
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "N",
+          "type": "integer"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor"
+        }
+      },
+      "title": "RelativeDate",
+      "type": "object"
+    },
+    "Theme": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "system",
+          "enum": [
+            "system",
+            "light",
+            "dark"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "palette": {
+          "default": "intelliq",
+          "title": "Palette",
+          "type": "string"
+        },
+        "density": {
+          "default": "comfortable",
+          "enum": [
+            "comfortable",
+            "compact"
+          ],
+          "title": "Density",
+          "type": "string"
+        }
+      },
+      "title": "Theme",
+      "type": "object"
+    },
+    "TopN": {
+      "additionalProperties": false,
+      "properties": {
+        "n": {
+          "maximum": 10000,
+          "minimum": 1,
+          "title": "N",
+          "type": "integer"
+        },
+        "by": {
+          "$ref": "#/$defs/FieldUse"
+        },
+        "direction": {
+          "default": "top",
+          "enum": [
+            "top",
+            "bottom"
+          ],
+          "title": "Direction",
+          "type": "string"
+        }
+      },
+      "required": [
+        "n",
+        "by"
+      ],
+      "title": "TopN",
+      "type": "object"
+    },
+    "VizField": {
+      "additionalProperties": false,
+      "description": "A field placed on a channel (\"shelf\") of a visualization.",
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "dimension",
+            "measure"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "channel": {
+          "enum": [
+            "x",
+            "y",
+            "color",
+            "size",
+            "label",
+            "detail",
+            "tooltip",
+            "column",
+            "value"
+          ],
+          "title": "Channel",
+          "type": "string"
+        },
+        "use": {
+          "$ref": "#/$defs/FieldUse"
+        }
+      },
+      "required": [
+        "key",
+        "role",
+        "channel",
+        "use"
+      ],
+      "title": "VizField",
+      "type": "object"
+    },
+    "VizOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "orientation": {
+          "default": "vertical",
+          "enum": [
+            "vertical",
+            "horizontal"
+          ],
+          "title": "Orientation",
+          "type": "string"
+        },
+        "stacked": {
+          "default": false,
+          "title": "Stacked",
+          "type": "boolean"
+        },
+        "show_labels": {
+          "default": false,
+          "title": "Show Labels",
+          "type": "boolean"
+        },
+        "show_legend": {
+          "default": true,
+          "title": "Show Legend",
+          "type": "boolean"
+        },
+        "smooth": {
+          "default": false,
+          "title": "Smooth",
+          "type": "boolean"
+        },
+        "show_points": {
+          "default": false,
+          "title": "Show Points",
+          "type": "boolean"
+        },
+        "donut": {
+          "default": true,
+          "title": "Donut",
+          "type": "boolean"
+        },
+        "comparison": {
+          "default": "none",
+          "enum": [
+            "none",
+            "previous_row"
+          ],
+          "title": "Comparison",
+          "type": "string"
+        },
+        "page_size": {
+          "default": 25,
+          "maximum": 500,
+          "minimum": 5,
+          "title": "Page Size",
+          "type": "integer"
+        },
+        "palette": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Palette"
+        }
+      },
+      "title": "VizOptions",
+      "type": "object"
+    },
+    "VizSort": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "direction": {
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "title": "Direction",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "title": "VizSort",
+      "type": "object"
+    },
+    "VizSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "bar",
+            "line",
+            "area",
+            "scatter",
+            "pie",
+            "table",
+            "kpi",
+            "heatmap"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "fields": {
+          "items": {
+            "$ref": "#/$defs/VizField"
+          },
+          "maxItems": 40,
+          "title": "Fields",
+          "type": "array"
+        },
+        "sort": {
+          "items": {
+            "$ref": "#/$defs/VizSort"
+          },
+          "maxItems": 5,
+          "title": "Sort",
+          "type": "array"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "maximum": 100000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit"
+        },
+        "options": {
+          "$ref": "#/$defs/VizOptions"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "VizSpec",
+      "type": "object"
+    },
+    "Worksheet": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "default": "",
+          "maxLength": 300,
+          "title": "Title",
+          "type": "string"
+        },
+        "subtitle": {
+          "default": "",
+          "maxLength": 500,
+          "title": "Subtitle",
+          "type": "string"
+        },
+        "show_title": {
+          "default": true,
+          "title": "Show Title",
+          "type": "boolean"
+        },
+        "dataset_id": {
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "viz": {
+          "$ref": "#/$defs/VizSpec"
+        },
+        "filters": {
+          "items": {
+            "$ref": "#/$defs/WorksheetFilter"
+          },
+          "maxItems": 50,
+          "title": "Filters",
+          "type": "array"
+        },
+        "drill_hierarchy": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Drill Hierarchy"
+        }
+      },
+      "required": [
+        "id",
+        "dataset_id",
+        "viz"
+      ],
+      "title": "Worksheet",
+      "type": "object"
+    },
+    "WorksheetFilter": {
+      "additionalProperties": false,
+      "description": "A filter authored into a worksheet. Always applied; viewers cannot remove it.",
+      "properties": {
+        "filter": {
+          "$ref": "#/$defs/Filter"
+        }
+      },
+      "required": [
+        "filter"
+      ],
+      "title": "WorksheetFilter",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "spec_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Spec Version",
+      "type": "integer"
+    },
+    "title": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "maxLength": 5000,
+      "title": "Description",
+      "type": "string"
+    },
+    "worksheets": {
+      "items": {
+        "$ref": "#/$defs/Worksheet"
+      },
+      "maxItems": 100,
+      "title": "Worksheets",
+      "type": "array"
+    },
+    "filters": {
+      "items": {
+        "$ref": "#/$defs/DashboardFilter"
+      },
+      "maxItems": 100,
+      "title": "Filters",
+      "type": "array"
+    },
+    "parameters": {
+      "items": {
+        "$ref": "#/$defs/Parameter"
+      },
+      "maxItems": 100,
+      "title": "Parameters",
+      "type": "array"
+    },
+    "actions": {
+      "items": {
+        "$ref": "#/$defs/Action"
+      },
+      "maxItems": 100,
+      "title": "Actions",
+      "type": "array"
+    },
+    "layout": {
+      "$ref": "#/$defs/Layout"
+    },
+    "theme": {
+      "$ref": "#/$defs/Theme"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "title": "Intelliq Dashboard Specification v1",
+  "type": "object",
+  "$id": "https://intelliq.dev/schema/dashboard.v1.json"
+}
