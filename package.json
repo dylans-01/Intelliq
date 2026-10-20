@@ -1,0 +1,14 @@
+{
+  "name": "intelliq",
+  "private": true,
+  "description": "Intelliq — independent BI platform. See README.md.",
+  "scripts": {
+    "web:dev": "npm --prefix apps/web run dev",
+    "web:build": "npm --prefix apps/web run build",
+    "web:test": "npm --prefix apps/web test",
+    "e2e": "playwright test -c tests/e2e/playwright.config.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field, ValidationError
 from ...platform.rbac import Cap
 from ...query.models import FieldUse, Filter, QueryRequest
 from ...query.planner import PlanError
+from ...semantic.model import Dataset
 from ...spec.compile import RuntimeState, compile_worksheet
 from ...spec.dashboard import Dashboard
 from ...spec.migrations import SpecMigrationError, load
@@ -42,6 +43,7 @@ class PreviewBody(BaseModel):
     spec: dict[str, Any]
     worksheet_id: str
     state: RuntimeState = Field(default_factory=RuntimeState)
+    import_id: str | None = None  # overlay this import's pending calculated fields
 
 
 class PublishBody(BaseModel):
@@ -110,10 +112,30 @@ def _detail(row: dict | None) -> dict:
     return {**_summary(row), "version": row["version"], "spec": load(row["spec"]).model_dump(mode="json")}
 
 
+def _drill_levels(app: AppContext, principal: Principal, spec: Dashboard) -> dict[str, list[str]]:
+    """Hierarchy levels (field ids) for drillable worksheets. Viewers cannot read
+    dataset definitions, so the dashboard exposes just what drilling needs."""
+
+    out: dict[str, list[str]] = {}
+    for ws in spec.worksheets:
+        if not ws.drill_hierarchy:
+            continue
+        try:
+            dataset, _ = app.dataset(ws.dataset_id, principal.workspace_id)
+        except LookupError:
+            continue
+        h = next((h for h in dataset.hierarchies if h.id == ws.drill_hierarchy), None)
+        if h is not None:
+            out[ws.id] = list(h.levels)
+    return out
+
+
 @router.get("/{did}")
 def get(did: str, version: int | None = None, draft: bool = False,
         principal: Principal = Depends(require(Cap.VIEW_DASHBOARDS)), app: AppContext = Depends(ctx)):
-    return _detail(_row(app, principal, did, version=version, draft=draft))
+    detail = _detail(_row(app, principal, did, version=version, draft=draft))
+    detail["drill_levels"] = _drill_levels(app, principal, load(detail["spec"]))
+    return detail
 
 
 @router.put("/{did}")
@@ -181,14 +203,16 @@ def delete(did: str, request: Request, principal: Principal = Depends(require(Ca
 
 # ----------------------------------------------------------------------------- data
 def _worksheet_result(app: AppContext, principal: Principal, spec: Dashboard, wid: str, state: RuntimeState,
-                      request: Request, target: tuple[str, str], allow_formulas: bool) -> dict:
+                      request: Request, target: tuple[str, str], allow_formulas: bool,
+                      overrides: dict[str, Dataset] | None = None) -> dict:
     try:
         ws = spec.worksheet(wid)
     except KeyError:
         raise HTTPException(404, "Worksheet not found") from None
     try:
         dataset, _ = app.dataset(ws.dataset_id, principal.workspace_id)
-        req, key_map = compile_worksheet(spec, ws, state, dataset)
+        override = (overrides or {}).get(ws.dataset_id)
+        req, key_map = compile_worksheet(spec, ws, state, override or dataset)
     except LookupError:
         raise HTTPException(404, "Dataset not found") from None
     except PlanError as e:
@@ -197,7 +221,7 @@ def _worksheet_result(app: AppContext, principal: Principal, spec: Dashboard, wi
     # published artifact, so viewers may execute them; ad-hoc formulas from
     # viewers are impossible because viewers only send RuntimeState.
     result = run_query(app, principal, req, allow_formulas=allow_formulas, audit_target=target, ip=client_ip(request),
-                       query_id=request.headers.get("X-Intelliq-Query-Id"))
+                       query_id=request.headers.get("X-Intelliq-Query-Id"), dataset_override=override)
     return {**result.model_dump(mode="json"), "key_map": key_map}
 
 
@@ -212,7 +236,28 @@ def worksheet_data(did: str, wid: str, body: DataBody, request: Request,
 def preview_data(body: PreviewBody, request: Request, principal: Principal = Depends(require(Cap.EDIT_DASHBOARDS, Cap.ADHOC_QUERY)),
                  app: AppContext = Depends(ctx)):
     spec = _validate(app, principal, body.spec)
-    return _worksheet_result(app, principal, spec, body.worksheet_id, body.state, request, ("preview", body.worksheet_id), True)
+    overrides = _import_overrides(app, principal, body.import_id) if body.import_id else None
+    return _worksheet_result(app, principal, spec, body.worksheet_id, body.state, request, ("preview", body.worksheet_id), True,
+                             overrides)
+
+
+def _import_overrides(app: AppContext, principal: Principal, import_id: str) -> dict[str, Dataset]:
+    """Datasets with an unapplied import's calculated fields merged in, for preview."""
+
+    from .imports import _convert
+
+    record = app.store.get_import(import_id)
+    if record is None or record["workspace_id"] != principal.workspace_id:
+        raise HTTPException(404, "Import not found")
+    result = _convert(app, principal, record, record["mapping"])
+    out: dict[str, Dataset] = {}
+    for did, fields in result.new_fields.items():
+        if not fields:
+            continue
+        base, _ = app.dataset(did, principal.workspace_id)
+        out[did] = Dataset.model_validate({**base.model_dump(by_alias=True),
+                                           "fields": [*[f.model_dump(by_alias=True) for f in base.fields], *fields]})
+    return out
 
 
 def _csv_cell(v: Any) -> Any:

@@ -865,6 +865,10 @@ def _pack(items: list[dict]) -> list[dict]:
         while any(_overlap(item, p) for p in placed):
             item["y"] += 1
         placed.append(item)
+    # Compact upwards so skipped zones (titles, blanks) don't leave empty bands.
+    for item in sorted(placed, key=lambda i: (i["y"], i["x"])):
+        while item["y"] > 0 and not any(_overlap({**item, "y": item["y"] - 1}, p) for p in placed if p is not item):
+            item["y"] -= 1
     return placed
 
 

@@ -1,0 +1,242 @@
+/*
+ * Intelliq design tokens.
+ * Every colour, size and motion value in the app comes from here. Components
+ * reference roles (surface, ink, accent…), never raw hex. Light and dark are
+ * each selected deliberately — dark is not an automatic inversion.
+ * Chart series/chrome values are the validated data-viz palette
+ * (see docs/07-design-system.md for the validator results).
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Typography */
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-hero: 30px;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --weight-regular: 420;
+  --weight-medium: 520;
+  --weight-semibold: 600;
+
+  /* Spacing (4px base) */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+
+  /* Layout */
+  --sidebar-width: 232px;
+  --sidebar-collapsed: 56px;
+  --topbar-height: 52px;
+  --control-height: 32px;
+  --control-height-sm: 28px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+
+  /* Surfaces */
+  --page: #f6f6f3;
+  --surface-1: #fcfcfb; /* cards, chart surface */
+  --surface-2: #f3f3f0; /* subtle fills, hover */
+  --surface-3: #ebebe6; /* pressed, selected neutral */
+  --surface-sunken: #efefeb;
+  --surface-overlay: #ffffff;
+  --scrim: rgba(11, 11, 11, 0.32);
+
+  /* Ink */
+  --ink-1: #0b0b0b;
+  --ink-2: #52514e;
+  --ink-3: #6f6e69;
+  --ink-muted: #898781;
+  --ink-inverse: #fcfcfb;
+
+  /* Lines */
+  --border: rgba(11, 11, 11, 0.1);
+  --border-strong: rgba(11, 11, 11, 0.18);
+  --divider: #e7e6e0;
+
+  /* Accent (interactive) */
+  --accent: #1c5cab;
+  --accent-hover: #184f95;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6effb;
+  --accent-soft-ink: #184f95;
+  --focus-ring: 0 0 0 2px var(--surface-1), 0 0 0 4px #3987e5;
+
+  /* Status (fixed meaning; always paired with icon + label) */
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --good-soft: #e5f4e3;
+  --warning: #fab219;
+  --warning-ink: #7a5200;
+  --warning-soft: #fdf3dc;
+  --serious: #ec835a;
+  --serious-ink: #9a3b14;
+  --critical: #d03b3b;
+  --critical-ink: #a32020;
+  --critical-soft: #fbe9e8;
+  --info-soft: #e6effb;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(11, 11, 11, 0.04);
+  --shadow-md: 0 4px 16px rgba(11, 11, 11, 0.08), 0 1px 2px rgba(11, 11, 11, 0.04);
+  --shadow-lg: 0 16px 48px rgba(11, 11, 11, 0.14), 0 2px 6px rgba(11, 11, 11, 0.06);
+
+  /* Data visualization (validated categorical order — do not reorder) */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #6250d6;
+  --series-8: #e34948;
+  --series-other: #b9b8b1;
+  --seq-100: #cde2fb;
+  --seq-300: #6da7ec;
+  --seq-500: #256abf;
+  --seq-700: #0d366b;
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+  --chart-label: #898781;
+  --delta-up: #006300;
+  --delta-down: #a32020;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0f0f0e;
+    --surface-1: #1a1a19;
+    --surface-2: #222220;
+    --surface-3: #2c2c2a;
+    --surface-sunken: #141413;
+    --surface-overlay: #232321;
+    --scrim: rgba(0, 0, 0, 0.55);
+    --ink-1: #f0efec;
+    --ink-2: #c3c2b7;
+    --ink-3: #a6a59c;
+    --ink-muted: #898781;
+    --ink-inverse: #0b0b0b;
+    --border: rgba(255, 255, 255, 0.1);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --divider: #2c2c2a;
+    --accent: #3987e5;
+    --accent-hover: #5598e7;
+    --accent-ink: #0b0b0b;
+    --accent-soft: #1b2a40;
+    --accent-soft-ink: #9ec5f4;
+    --focus-ring: 0 0 0 2px var(--surface-1), 0 0 0 4px #5598e7;
+    --good-ink: #3cc13c;
+    --good-soft: #15291a;
+    --warning-ink: #fab219;
+    --warning-soft: #2e2512;
+    --serious-ink: #ec835a;
+    --critical: #e05454;
+    --critical-ink: #f08080;
+    --critical-soft: #331a1a;
+    --info-soft: #1b2a40;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+    --series-other: #5b5a55;
+    --seq-100: #104281;
+    --seq-300: #256abf;
+    --seq-500: #5598e7;
+    --seq-700: #b7d3f6;
+    --chart-grid: #2c2c2a;
+    --chart-axis: #383835;
+    --chart-label: #898781;
+    --delta-up: #0ca30c;
+    --delta-down: #f08080;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0f0f0e;
+  --surface-1: #1a1a19;
+  --surface-2: #222220;
+  --surface-3: #2c2c2a;
+  --surface-sunken: #141413;
+  --surface-overlay: #232321;
+  --scrim: rgba(0, 0, 0, 0.55);
+  --ink-1: #f0efec;
+  --ink-2: #c3c2b7;
+  --ink-3: #a6a59c;
+  --ink-muted: #898781;
+  --ink-inverse: #0b0b0b;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --divider: #2c2c2a;
+  --accent: #3987e5;
+  --accent-hover: #5598e7;
+  --accent-ink: #0b0b0b;
+  --accent-soft: #1b2a40;
+  --accent-soft-ink: #9ec5f4;
+  --focus-ring: 0 0 0 2px var(--surface-1), 0 0 0 4px #5598e7;
+  --good-ink: #3cc13c;
+  --good-soft: #15291a;
+  --warning-ink: #fab219;
+  --warning-soft: #2e2512;
+  --serious-ink: #ec835a;
+  --critical: #e05454;
+  --critical-ink: #f08080;
+  --critical-soft: #331a1a;
+  --info-soft: #1b2a40;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  --series-other: #5b5a55;
+  --seq-100: #104281;
+  --seq-300: #256abf;
+  --seq-500: #5598e7;
+  --seq-700: #b7d3f6;
+  --chart-grid: #2c2c2a;
+  --chart-axis: #383835;
+  --chart-label: #898781;
+  --delta-up: #0ca30c;
+  --delta-down: #f08080;
+}

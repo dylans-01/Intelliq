@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel, Field
 
 from ...importer.archive import WorkbookFileError, read_workbook
-from ...importer.convert import Converter, suggest_mapping
+from ...importer.convert import Converter, source_fields, suggest_mapping
 from ...importer.twb_parser import WorkbookParseError, parse_workbook
 from ...platform.rbac import Cap
 from ...platform.store import now
@@ -41,7 +41,10 @@ def _inventory(workbook: dict) -> dict:
     return {
         "datasources": [{"name": d["name"], "caption": d["caption"], "connection": d.get("connection"),
                          "extract": d.get("extract"), "custom_sql": bool(d.get("custom_sql")),
-                         "fields": [c["caption"] or c["name"] for c in d["columns"]] + [m["local_name"] for m in d["metadata"]]}
+                         "fields": [c["caption"] or c["name"] for c in d["columns"]] + [m["local_name"] for m in d["metadata"]],
+                         # Mappable source fields: physical columns, keyed by Tableau's internal name.
+                         "raw_fields": [{"name": f.name, "caption": f.caption} for f in source_fields(d).values()
+                                        if f.formula is None and f.unsupported is None]}
                         for d in workbook["datasources"]],
         "worksheets": [w["name"] for w in workbook["worksheets"]],
         "dashboards": [d["name"] for d in workbook["dashboards"]],

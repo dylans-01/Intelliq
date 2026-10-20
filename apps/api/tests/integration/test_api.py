@@ -102,6 +102,8 @@ def test_worksheet_data_with_runtime_state(api):
     body = r.json()
     assert body["key_map"] == {"region": "d0", "sales": "m0", "ratio": "m1"}
     assert len(body["rows"]) == 4 and body["sql"] is not None  # admins can see SQL
+    detail = api.client("viewer").get(f"/api/dashboards/{did}").json()
+    assert detail["drill_levels"] == {"by_category": ["category", "sub_category", "product_name"]}
     filtered = c.post(f"/api/dashboards/{did}/worksheets/trend/data", json={"state": {
         "selections": [{"action_id": "region_filter", "tuples": [{"region": "East"}]}],
         "filters": {"f_segment": {"values": ["Consumer"]}}}}).json()
@@ -209,6 +211,13 @@ def test_import_flow(api):
     assert body["mapping"]["datasources"] == {"federated.0a1b2c3": "superstore"}
     assert body["report"]["summary"]["unsupported"] >= 3
     assert len(body["preview"]["dashboards"]) == 1
+    # Preview before applying: pending calculated fields are overlaid in memory
+    preview_spec = body["preview"]["dashboards"][0]
+    for ws in preview_spec["worksheets"]:
+        r = c.post("/api/dashboards/preview/data", json={"spec": preview_spec, "worksheet_id": ws["id"], "import_id": body["id"]})
+        assert r.status_code == 200, (ws["id"], r.text)
+    no_overlay = c.post("/api/dashboards/preview/data", json={"spec": preview_spec, "worksheet_id": "customer_detail"})
+    assert no_overlay.status_code == 400  # uses a field that only exists once the import is applied
     # Remap one field and re-run
     mapping = body["mapping"]
     mapping["fields"]["federated.0a1b2c3"]["Postal Code"] = "state"

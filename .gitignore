@@ -18,3 +18,5 @@ playwright-report/
 .env
 .env.*
 !.env.example
+# Playwright output
+test-results/

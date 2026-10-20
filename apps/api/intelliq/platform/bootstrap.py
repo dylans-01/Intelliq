@@ -118,7 +118,7 @@ def sample_dashboard_spec() -> dict:
         "description": "Example dashboard over the synthetic sample warehouse.",
         "worksheets": ws,
         "filters": [
-            {"id": "f_year", "label": "Order year", "dataset_id": "superstore", "field": "order_date",
+            {"id": "f_year", "label": "Order date", "dataset_id": "superstore", "field": "order_date",
              "control": "date_range", "default": []},
             {"id": "f_segment", "label": "Segment", "dataset_id": "superstore", "field": "segment", "default": []},
             {"id": "f_category", "label": "Category", "dataset_id": "superstore", "field": "category", "default": []},

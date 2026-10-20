@@ -12,6 +12,7 @@ from ..connectors.base import ConnectorError, DriverMissing, QueryCancelled, Que
 from ..platform.rbac import Cap
 from ..query.models import QueryRequest, QueryResult
 from ..query.planner import PlanError, Planner, UserContext
+from ..semantic.model import Dataset
 from .context import AppContext
 from .deps import Principal
 
@@ -37,13 +38,21 @@ def run_query(
     audit_target: tuple[str, str] | None = None,
     ip: str | None = None,
     query_id: str | None = None,
+    dataset_override: Dataset | None = None,
 ) -> QueryResult:
+    """``dataset_override`` lets authoring previews plan against an unsaved
+    variant of a dataset (e.g. an import's pending calculated fields)."""
+
     if not app.query_limiter.allow(principal.id):
         raise HTTPException(429, "Too many queries; slow down and try again shortly")
     try:
         dataset, version = app.dataset(req.dataset_id, principal.workspace_id)
     except LookupError:
         raise HTTPException(404, "Dataset not found") from None
+    if dataset_override is not None:
+        if dataset_override.id != dataset.id or dataset_override.connection_id != dataset.connection_id:
+            raise HTTPException(400, "Dataset override does not match the stored dataset")
+        dataset, version = dataset_override, f"{version}-preview"
     try:
         connector = app.connector_for(dataset.connection_id, principal.workspace_id)
         planned = Planner(dataset, connector.dialect, user_context(principal), allow_formulas=allow_formulas).plan(req)
