@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+# Node
+node_modules/
+dist/
+apps/web/test-results/
+tests/e2e/test-results/
+playwright-report/
+# Local runtime data (metadata DB, sample warehouse, secrets)
+.intelliq/
+*.duckdb
+*.duckdb.wal
+*.sqlite3
+.env
+.env.*
+!.env.example
