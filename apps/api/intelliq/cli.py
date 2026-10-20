@@ -61,9 +61,10 @@ def cmd_dev(args: argparse.Namespace) -> int:
 def cmd_serve(args: argparse.Namespace) -> int:
     import uvicorn
 
-    from .api.app import create_app
-
-    uvicorn.run(create_app(), host=args.host, port=args.port, log_level="info")
+    # Factory string so uvicorn can start several worker processes. Each worker
+    # has its own result cache; the metadata store (SQLite WAL) is shared.
+    uvicorn.run("intelliq.api.app:create_app", factory=True, host=args.host, port=args.port,
+                workers=args.workers, log_level="info")
     return 0
 
 
@@ -97,6 +98,7 @@ def main(argv: list[str] | None = None) -> int:
         p = sub.add_parser(name, help=helptext)
         p.add_argument("--host", default="127.0.0.1")
         p.add_argument("--port", type=int, default=8000)
+        p.add_argument("--workers", type=int, default=1, help="Worker processes (CPU-bound query planning scales with workers)")
         p.set_defaults(func=func)
 
     p = sub.add_parser("export-schema", help="Write the dashboard JSON Schema")

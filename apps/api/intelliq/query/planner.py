@@ -258,6 +258,11 @@ class Planner:
         for i, fu in enumerate(req.measures):
             cid = f"m{i}"
             tree, typed, f = self._measure_tree(fu)
+            if typed.level == "table":
+                partition = fu.table_calc.partition_by if fu.table_calc else []
+                addressed = [t for cid_, t in dim_trees if cid_ not in partition]
+                tree = self._rewrite_totals(tree, addressed)
+                typed = self.checker.check(tree)
             is_table = typed.level == "table"
             if is_table:
                 split = self._split_table_calc(tree, hidden)
@@ -416,6 +421,31 @@ class Planner:
             tree = _quick_table_calc(tree, fu.table_calc)
         typed = self.checker.check(tree)
         return tree, typed, f
+
+    def _rewrite_totals(self, tree: A.Node, addressed_dims: list[A.Node]) -> A.Node:
+        """Make TOTAL() exact for every aggregate.
+
+        Additive or idempotent aggregates re-aggregate on the result set
+        (SUM/COUNT → WINDOW_SUM, MIN/MAX → WINDOW_MIN/MAX). Others (AVG, COUNTD,
+        MEDIAN, …) cannot be derived from view-level values, so they are computed
+        in the database over the underlying rows at the partition's grain:
+        TOTAL(AGG(x)) → MIN({EXCLUDE <addressed dimensions> : AGG(x)}).
+        """
+
+        window = {"SUM": "WINDOW_SUM", "COUNT": "WINDOW_SUM", "MIN": "WINDOW_MIN", "MAX": "WINDOW_MAX"}
+
+        def visit(node: A.Node) -> A.Node:
+            if isinstance(node, A.Func) and node.name == "TOTAL" and len(node.args) == 1:
+                inner = node.args[0]
+                if isinstance(inner, A.Func) and inner.name in window and len(inner.args) == 1:
+                    return A.Func(window[inner.name], (inner,), node.span)
+                if isinstance(inner, A.Func) and inner.name in AGG_FN.values():
+                    excluded = tuple(self.model.expand(d) for d in addressed_dims)
+                    return A.Func("MIN", (A.Lod(A.LodKind.EXCLUDE, excluded, inner, node.span),), node.span)
+                return node  # e.g. TOTAL(SUM(x) / SUM(y)): sum of view values, as documented
+            return A.map_children(node, visit)
+
+        return visit(tree)
 
     def _split_table_calc(self, tree: A.Node, hidden: dict[A.Node, str]) -> A.Node:
         def split(node: A.Node) -> A.Node:

@@ -84,8 +84,7 @@ class Store:
         self._local = threading.local()
         self._migrate()
 
-    @contextmanager
-    def tx(self) -> Iterator[sqlite3.Connection]:
+    def _conn(self) -> sqlite3.Connection:
         conn = getattr(self._local, "conn", None)
         if conn is None:
             conn = sqlite3.connect(self.path, timeout=30, isolation_level=None, check_same_thread=False)
@@ -94,6 +93,25 @@ class Store:
             conn.execute("PRAGMA foreign_keys=ON")
             conn.execute("PRAGMA busy_timeout=30000")
             self._local.conn = conn
+        return conn
+
+    @contextmanager
+    def read(self) -> Iterator[sqlite3.Connection]:
+        """Read-only access. Uses a deferred transaction so concurrent readers
+        never wait on SQLite's write lock (WAL gives each a consistent snapshot)."""
+
+        conn = self._conn()
+        conn.execute("BEGIN")
+        try:
+            yield conn
+        finally:
+            conn.execute("COMMIT")
+
+    @contextmanager
+    def tx(self) -> Iterator[sqlite3.Connection]:
+        """Read-write transaction; takes the write lock up front to avoid upgrade deadlocks."""
+
+        conn = self._conn()
         conn.execute("BEGIN IMMEDIATE")
         try:
             yield conn
@@ -125,17 +143,17 @@ class Store:
         return self.get_user(uid)  # type: ignore[return-value]
 
     def get_user(self, uid: str) -> dict | None:
-        with self.tx() as c:
+        with self.read() as c:
             row = c.execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
         return _user(row)
 
     def user_by_email(self, email: str) -> dict | None:
-        with self.tx() as c:
+        with self.read() as c:
             row = c.execute("SELECT * FROM users WHERE email = ?", (email.strip().lower(),)).fetchone()
         return _user(row)
 
     def list_users(self, workspace_id: str) -> list[dict]:
-        with self.tx() as c:
+        with self.read() as c:
             rows = c.execute(
                 "SELECT u.*, m.role FROM users u JOIN memberships m ON m.user_id = u.id "
                 "WHERE m.workspace_id = ? ORDER BY u.name", (workspace_id,)
@@ -162,7 +180,7 @@ class Store:
         return {"id": wid, "name": name}
 
     def workspaces_for(self, uid: str) -> list[dict]:
-        with self.tx() as c:
+        with self.read() as c:
             rows = c.execute(
                 "SELECT w.id, w.name, w.settings, m.role FROM workspaces w JOIN memberships m ON m.workspace_id = w.id "
                 "WHERE m.user_id = ? ORDER BY w.name", (uid,)
@@ -177,12 +195,12 @@ class Store:
             )
 
     def role_in(self, uid: str, wid: str) -> str | None:
-        with self.tx() as c:
+        with self.read() as c:
             row = c.execute("SELECT role FROM memberships WHERE user_id = ? AND workspace_id = ?", (uid, wid)).fetchone()
         return row["role"] if row else None
 
     def count_admins(self, wid: str) -> int:
-        with self.tx() as c:
+        with self.read() as c:
             return c.execute(
                 "SELECT COUNT(*) FROM memberships m JOIN users u ON u.id = m.user_id "
                 "WHERE m.workspace_id = ? AND m.role = 'admin' AND u.is_active = 1", (wid,)
@@ -198,7 +216,7 @@ class Store:
             )
 
     def get_session(self, token_hash: str) -> dict | None:
-        with self.tx() as c:
+        with self.read() as c:
             row = c.execute("SELECT * FROM sessions WHERE token_hash = ? AND expires_at > ?", (token_hash, now())).fetchone()
         return dict(row) if row else None
 
@@ -228,19 +246,19 @@ class Store:
             )
 
     def get_connection(self, cid: str) -> dict | None:
-        with self.tx() as c:
+        with self.read() as c:
             row = c.execute("SELECT * FROM connections WHERE id = ?", (cid,)).fetchone()
         return _conn(row)
 
     def connection_secret(self, cid: str) -> str | None:
         """Encrypted credential blob; only the platform's SecretBox can open it."""
 
-        with self.tx() as c:
+        with self.read() as c:
             row = c.execute("SELECT secret_enc FROM connections WHERE id = ?", (cid,)).fetchone()
         return row["secret_enc"] if row else None
 
     def list_connections(self, wid: str) -> list[dict]:
-        with self.tx() as c:
+        with self.read() as c:
             rows = c.execute("SELECT * FROM connections WHERE workspace_id = ? ORDER BY name", (wid,)).fetchall()
         return [_conn(r) for r in rows]  # type: ignore[misc]
 
@@ -267,7 +285,7 @@ class Store:
         return version
 
     def get_dataset(self, did: str, version: int | None = None) -> dict | None:
-        with self.tx() as c:
+        with self.read() as c:
             row = c.execute("SELECT * FROM datasets WHERE id = ?", (did,)).fetchone()
             if row is None:
                 return None
@@ -278,7 +296,7 @@ class Store:
         return {**dict(row), "version": v, "model": json.loads(mv["model"])}
 
     def list_datasets(self, wid: str) -> list[dict]:
-        with self.tx() as c:
+        with self.read() as c:
             rows = c.execute(
                 "SELECT d.*, v.model FROM datasets d JOIN dataset_versions v ON v.dataset_id = d.id AND v.version = d.current_version "
                 "WHERE d.workspace_id = ? ORDER BY d.name", (wid,)
@@ -286,7 +304,7 @@ class Store:
         return [{**{k: r[k] for k in r.keys() if k != "model"}, "model": json.loads(r["model"])} for r in rows]
 
     def dataset_versions(self, did: str) -> list[dict]:
-        with self.tx() as c:
+        with self.read() as c:
             rows = c.execute(
                 "SELECT version, note, created_by, created_at FROM dataset_versions WHERE dataset_id = ? ORDER BY version DESC",
                 (did,),
@@ -328,7 +346,7 @@ class Store:
             c.execute("UPDATE dashboards SET status = 'draft', published_version = NULL, updated_at = ? WHERE id = ?", (now(), did))
 
     def get_dashboard(self, did: str, version: int | None = None) -> dict | None:
-        with self.tx() as c:
+        with self.read() as c:
             row = c.execute("SELECT * FROM dashboards WHERE id = ?", (did,)).fetchone()
             if row is None:
                 return None
@@ -340,12 +358,12 @@ class Store:
 
     def list_dashboards(self, wid: str, published_only: bool = False) -> list[dict]:
         q = "SELECT * FROM dashboards WHERE workspace_id = ?" + (" AND status = 'published'" if published_only else "")
-        with self.tx() as c:
+        with self.read() as c:
             rows = c.execute(q + " ORDER BY updated_at DESC", (wid,)).fetchall()
         return [dict(r) for r in rows]
 
     def dashboard_versions(self, did: str) -> list[dict]:
-        with self.tx() as c:
+        with self.read() as c:
             rows = c.execute(
                 "SELECT version, note, created_by, created_at FROM dashboard_versions WHERE dashboard_id = ? ORDER BY version DESC",
                 (did,),
@@ -379,7 +397,7 @@ class Store:
             c.execute(f"UPDATE imports SET {', '.join(sets)}, updated_at = ? WHERE id = ?", (*values, now(), iid))
 
     def get_import(self, iid: str) -> dict | None:
-        with self.tx() as c:
+        with self.read() as c:
             row = c.execute("SELECT * FROM imports WHERE id = ?", (iid,)).fetchone()
         if row is None:
             return None
@@ -389,7 +407,7 @@ class Store:
         return d
 
     def list_imports(self, wid: str) -> list[dict]:
-        with self.tx() as c:
+        with self.read() as c:
             rows = c.execute(
                 "SELECT id, filename, sha256, size, status, report, dashboard_ids, created_by, created_at FROM imports "
                 "WHERE workspace_id = ? ORDER BY created_at DESC", (wid,)
@@ -422,7 +440,7 @@ class Store:
             args.append(action.replace("%", "") + "%")
         q += " ORDER BY a.id DESC LIMIT ?"
         args.append(min(limit, 1000))
-        with self.tx() as c:
+        with self.read() as c:
             rows = c.execute(q, args).fetchall()
         return [{**dict(r), "detail": json.loads(r["detail"])} for r in rows]
 

@@ -286,3 +286,26 @@ def test_week_start_setting(runner, dataset):
     monday_rows = runner.rows(q, dataset=monday)
     assert {date.fromisoformat(r[0]).weekday() for r in sunday_rows} == {6}
     assert {date.fromisoformat(r[0]).weekday() for r in monday_rows} == {0}
+
+
+def test_total_is_exact_for_every_aggregate(runner, oracle):
+    rows = runner.rows({"dimensions": [{"field": "region"}],
+                        "measures": [{"formula": "TOTAL(MIN([Sales]))"}, {"formula": "TOTAL(AVG([Sales]))"},
+                                     {"formula": "TOTAL(COUNTD([Customer Name]))"}, {"formula": "TOTAL(SUM([Sales]))"}],
+                        "filters": [{"target": {"field": "segment"}, "op": "in", "values": ["Consumer"]}]})
+    mn, avg, cd, sm = oracle.execute("""
+        SELECT MIN(sales)::DOUBLE, AVG(sales::DOUBLE), COUNT(DISTINCT customer_name), SUM(sales)::DOUBLE
+        FROM orders WHERE segment = 'Consumer'""").fetchone()
+    for r in rows:
+        assert r[1:] == [pytest.approx(mn), pytest.approx(avg), cd, pytest.approx(sm)]
+
+
+def test_percent_of_total_of_an_average_partitioned(runner, oracle):
+    rows = runner.rows({"dimensions": [{"field": "region"}, {"field": "segment"}],
+                        "measures": [{"field": "sales", "aggregation": "avg",
+                                      "table_calc": {"type": "percent_of_total", "partition_by": ["d0"]}}]})
+    expected = oracle.execute("""
+        SELECT region, segment, AVG(sales::DOUBLE) / AVG(AVG(sales::DOUBLE)) OVER () AS wrong,
+               AVG(sales::DOUBLE) / (SELECT AVG(o2.sales::DOUBLE) FROM orders o2 WHERE o2.region = o.region) AS right_
+        FROM orders o GROUP BY 1, 2 ORDER BY 1, 2""").fetchall()
+    assert [r[2] for r in rows] == [pytest.approx(e[3]) for e in expected]

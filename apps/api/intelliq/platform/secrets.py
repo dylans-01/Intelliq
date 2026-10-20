@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from pathlib import Path
 
 from cryptography.fernet import Fernet, InvalidToken
@@ -28,10 +29,19 @@ class SecretBox:
         key_file = data_dir / "dev-secret.key"
         if not key_file.exists():
             data_dir.mkdir(parents=True, exist_ok=True)
-            fd = os.open(key_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-            with os.fdopen(fd, "wb") as fh:
-                fh.write(Fernet.generate_key())
-        return cls(key_file.read_bytes().strip())
+            try:
+                fd = os.open(key_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            except FileExistsError:
+                pass  # another worker process created it first
+            else:
+                with os.fdopen(fd, "wb") as fh:
+                    fh.write(Fernet.generate_key())
+        for _ in range(50):  # wait for a concurrent writer to finish
+            key = key_file.read_bytes().strip()
+            if key:
+                return cls(key)
+            time.sleep(0.02)
+        raise RuntimeError("Development secret key file is empty")
 
     def seal(self, secrets: dict[str, str]) -> str:
         return self._fernet.encrypt(json.dumps(secrets).encode()).decode()

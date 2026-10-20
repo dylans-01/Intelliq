@@ -149,8 +149,8 @@ _DEFS: list[FunctionDef] = [
     FunctionDef("WINDOW_COUNT", "table", 1, 1, _const("integer"), "Table calculation", "Count over the partition."),
     FunctionDef("TOTAL", "table", 1, 1, lambda a: _num(a), "Table calculation",
                 "Total of the expression over the partition.",
-                "Computed by re-aggregating view-level values (exact for SUM/MIN/MAX/COUNT; "
-                "Tableau re-queries for AVG/COUNTD — see compatibility docs)."),
+                "Exact for every aggregate: SUM/COUNT/MIN/MAX re-aggregate the view; AVG, COUNTD, MEDIAN… "
+                "are computed in the database at the partition grain. Interaction with measure filters: validation pending."),
     FunctionDef("INDEX", "table", 0, 0, _const("integer"), "Table calculation", "1-based row index in the partition."),
     FunctionDef("FIRST", "table", 0, 0, _const("integer"), "Table calculation", "Offset to the first row (<= 0)."),
     FunctionDef("LAST", "table", 0, 0, _const("integer"), "Table calculation", "Offset to the last row (>= 0)."),

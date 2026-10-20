@@ -31,6 +31,7 @@ class PostgresConnector(Connector):
     marker = "%s"
     escape_percent = True
     label = "PostgreSQL"
+    verified = True  # contract suite passes against PostgreSQL 16 (tests/integration/test_connector_contract.py)
     config_fields = [
         ("host", "Host", False, True),
         ("port", "Port", False, False),
